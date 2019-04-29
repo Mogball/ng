@@ -1,6 +1,5 @@
+#include "key_handler.h"
 #include <linmath.h>
-#include <glad/gl.h>
-#include <GLFW/glfw3.h>
 #include <iostream>
 
 static constexpr auto s_vert_code = R"glsl(
@@ -28,29 +27,6 @@ static void S_error_callback(int err, const char *desc) {
     std::cout << "Error [" << err << "]: " << desc << std::endl;
 }
 
-static void S_key_callback(GLFWwindow *win, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_E) {
-        if (action == GLFW_PRESS) {
-            std::cout << "Keypress E" << std::endl;
-        } else if (action == GLFW_RELEASE) {
-            std::cout << "Keyrelease E" << std::endl;
-        }
-    }
-
-    if (action != GLFW_PRESS) {
-        return;
-    }
-
-    switch (key) {
-    case GLFW_KEY_SPACE:
-        std::cout << "Space Bar!" << std::endl;
-        break;
-    case GLFW_KEY_ESCAPE:
-        glfwSetWindowShouldClose(win, GLFW_TRUE);
-        break;
-    }
-}
-
 static constexpr float vertices[8] = {
     -0.5, -0.5,
      0.5, -0.5,
@@ -59,6 +35,15 @@ static constexpr float vertices[8] = {
 };
 
 int main() {
+    auto& handler = ng::KeyHandler::get();
+    handler.set_delegate(GLFW_KEY_E, [](GLFWwindow *, int action, int) {
+        if (action >= 2) { return; }
+        std::cout << (action ? "Pressed" : "Released") << std::endl;
+    });
+    handler.set_delegate(GLFW_KEY_ESCAPE, [](GLFWwindow *win, int action, int) {
+        glfwSetWindowShouldClose(win, GLFW_TRUE);
+    });
+
     std::cout << "Hello world!" << std::endl;
 
     glfwSetErrorCallback(S_error_callback);
@@ -73,7 +58,7 @@ int main() {
         return EXIT_FAILURE;
     }
 
-    glfwSetKeyCallback(win, S_key_callback);
+    handler.register_handler(win);
     glfwMakeContextCurrent(win);
     gladLoadGL(glfwGetProcAddress);
     glfwSwapInterval(1);
