@@ -12,33 +12,26 @@ namespace ng {
 
     private:
         static constexpr auto NUM_KEYS = GLFW_KEY_LAST + 1;
-
         static void callback(GLFWwindow *win, int key, int code, int action, int mods);
+        static KeyHandler *s_instance;
 
         std::array<bool, NUM_KEYS> m_key_map{};
         std::array<Delegate, NUM_KEYS> m_delegates{};
 
-        KeyHandler();
-
     public:
-        static inline KeyHandler &get() {
-            static KeyHandler instance;
-            return instance;
-        }
+        KeyHandler(GLFWwindow *win);
 
         inline bool pressed(int key) {
             return m_key_map[key];
-        }
-
-        inline void register_handler(GLFWwindow *win) {
-            glfwSetKeyCallback(win, &KeyHandler::callback);
         }
 
         inline void set_delegate(int key, Delegate del) {
             m_delegates[key] = del;
         }
 
-        void remove_delegate(int key);
+        inline void remove_delegate(int key) {
+            m_delegates[key] = [](GLFWwindow *, int, int) {};
+        }
     };
 
 }

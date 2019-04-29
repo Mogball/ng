@@ -1,4 +1,5 @@
 #include "key_handler.h"
+#include "window.h"
 #include <linmath.h>
 #include <iostream>
 
@@ -23,10 +24,6 @@ static constexpr auto s_frag_code = R"glsl(
     }
 )glsl";
 
-static void S_error_callback(int err, const char *desc) {
-    std::cout << "Error [" << err << "]: " << desc << std::endl;
-}
-
 static constexpr float vertices[8] = {
     -0.5, -0.5,
      0.5, -0.5,
@@ -35,7 +32,8 @@ static constexpr float vertices[8] = {
 };
 
 int main() {
-    auto& handler = ng::KeyHandler::get();
+    ng::Window window;
+    ng::KeyHandler handler{ window.get() };
     handler.set_delegate(GLFW_KEY_E, [](GLFWwindow *, int action, int) {
         if (action >= 2) { return; }
         std::cout << (action ? "Pressed" : "Released") << std::endl;
@@ -44,24 +42,6 @@ int main() {
         glfwSetWindowShouldClose(win, GLFW_TRUE);
     });
 
-    std::cout << "Hello world!" << std::endl;
-
-    glfwSetErrorCallback(S_error_callback);
-    if (!glfwInit()) {
-        std::cout << "Failed: glfwInit()" << std::endl;
-        return EXIT_FAILURE;
-    }
-
-    GLFWwindow *win = glfwCreateWindow(1920, 1080, "Memes", nullptr, nullptr);
-    if (!win) {
-        std::cout << "Failed: glfwCreateWindow()" << std::endl;
-        return EXIT_FAILURE;
-    }
-
-    handler.register_handler(win);
-    glfwMakeContextCurrent(win);
-    gladLoadGL(glfwGetProcAddress);
-    glfwSwapInterval(1);
 
     GLuint vertex_buffer;
     glGenBuffers(1, &vertex_buffer);
@@ -90,9 +70,7 @@ int main() {
     float pos[] = { 0.2, 0.2 };
     glUniform2fv(uniform_pos, 1, pos);
 
-    int w, h;
-    glfwGetFramebufferSize(win, &w, &h);
-    float r = static_cast<float>(w) / h;
+    float r = static_cast<float>(window.width()) / window.height();
 
     mat4x4 proj, model, mvp;
     mat4x4_ortho(proj, -r, r, -1, 1, 0, 1);
@@ -101,16 +79,11 @@ int main() {
     GLint uniform_mvp = glGetUniformLocation(program, "mvp");
     glUniformMatrix4fv(uniform_mvp, 1, GL_FALSE, reinterpret_cast<GLfloat *>(mvp));
 
-    while (!glfwWindowShouldClose(win)) {
-        glViewport(0, 0, w, h);
+    while (window.poll()) {
+        glViewport(0, 0, window.width(), window.height());
         glClear(GL_COLOR_BUFFER_BIT);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-        glfwSwapBuffers(win);
-        glfwPollEvents();
     }
 
-    glfwDestroyWindow(win);
-    glfwTerminate();
     return EXIT_SUCCESS;
 }
