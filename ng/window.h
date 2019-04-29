@@ -18,8 +18,8 @@ namespace ng {
 
         inline GLFWwindow *get() { return m_win; }
 
-        inline int width()  { return m_win_w; }
-        inline int height() { return m_win_h; }
+        inline int width()  const { return m_win_w; }
+        inline int height() const { return m_win_h; }
     };
 
 }
