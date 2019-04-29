@@ -2,6 +2,8 @@
 #include "linmath.h"
 #include "window.h"
 
+static constexpr auto WORLD_SCALE = 0.1;
+
 static constexpr auto VERT_CODE = R"glsl(
 #version 150 core
 
@@ -77,8 +79,11 @@ namespace ng {
         m_uniforms[Uniform::MVP] = glGetUniformLocation(prog_shdr, "mvp");
 
         float r = static_cast<float>(win.width()) / win.height();
-        mat4x4 mvp;
+        mat4x4 mvp, s;
+        mat4x4_identity(s);
+        mat4x4_scale_aniso(s, s, WORLD_SCALE, WORLD_SCALE, WORLD_SCALE);
         mat4x4_ortho(mvp, -r, r, -1, 1, 0, 1);
+        mat4x4_mul(mvp, mvp, s);
         glUniformMatrix4fv(m_uniforms[Uniform::MVP], 1, GL_FALSE, reinterpret_cast<GLfloat *>(mvp));
     }
 
