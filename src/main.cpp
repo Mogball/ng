@@ -1,3 +1,4 @@
+#include <linmath.h>
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -7,8 +8,11 @@ static constexpr auto s_vert_code = R"glsl(
 
     in vec2 position;
 
+    uniform mat4 mvp;
+    uniform vec2 pos;
+
     void main() {
-        gl_Position = vec4(position, 0.0, 1.0);
+        gl_Position = mvp * vec4(pos + position, 0.0, 1.0);
     }
 )glsl";
 
@@ -25,6 +29,14 @@ static void S_error_callback(int err, const char *desc) {
 }
 
 static void S_key_callback(GLFWwindow *win, int key, int scancode, int action, int mods) {
+    if (key == GLFW_KEY_E) {
+        if (action == GLFW_PRESS) {
+            std::cout << "Keypress E" << std::endl;
+        } else if (action == GLFW_RELEASE) {
+            std::cout << "Keyrelease E" << std::endl;
+        }
+    }
+
     if (action != GLFW_PRESS) {
         return;
     }
@@ -85,12 +97,24 @@ int main() {
     glLinkProgram(program);
     glUseProgram(program);
 
-    GLuint attrib_pos = glGetAttribLocation(program, "position");
+    GLint attrib_pos = glGetAttribLocation(program, "position");
     glEnableVertexAttribArray(attrib_pos);
     glVertexAttribPointer(attrib_pos, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
+    GLint uniform_pos = glGetUniformLocation(program, "pos");
+    float pos[] = { 0.2, 0.2 };
+    glUniform2fv(uniform_pos, 1, pos);
+
     int w, h;
     glfwGetFramebufferSize(win, &w, &h);
+    float r = static_cast<float>(w) / h;
+
+    mat4x4 proj, model, mvp;
+    mat4x4_ortho(proj, -r, r, -1, 1, 0, 1);
+    mat4x4_identity(model);
+    mat4x4_mul(mvp, proj, model);
+    GLint uniform_mvp = glGetUniformLocation(program, "mvp");
+    glUniformMatrix4fv(uniform_mvp, 1, GL_FALSE, reinterpret_cast<GLfloat *>(mvp));
 
     while (!glfwWindowShouldClose(win)) {
         glViewport(0, 0, w, h);
