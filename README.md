@@ -1,13 +1,16 @@
-## Windows
-
-Clone Box2D:
+## Setup
+Update submodules:
 
 ```
 git submodule update --init
 ```
 
-With the [Cygwin installer](https://www.cygwin.com), install
+And install CMake.
 
-1. `gcc-g++`
-2. `make`
-3. `cmake`
+### Windows
+Build with [MinGW](http://www.mingw.org). Install `mingw-get`
+
+```
+mingw-get.exe g++
+mingw-get.exe mingw32-make
+```
