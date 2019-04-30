@@ -22,71 +22,32 @@ int main() {
     b2Vec2 gravity{ 0, -10 };
     b2World world{ gravity };
 
-    b2BodyDef groundBodyDef;
-    groundBodyDef.position.Set(0, -20);
-    b2Body *groundBody = world.CreateBody(&groundBodyDef);
-    b2PolygonShape groundBox;
-    groundBox.SetAsBox(50, 10);
-    groundBody->CreateFixture(&groundBox, 0);
+    Entity ground;
+    Entity::create_rect(world, ground, b2_staticBody, 50, 10, 0, -20);
 
-    b2BodyDef bodyDef;
-    bodyDef.type = b2_dynamicBody;
-    bodyDef.position.Set(0, 10);
-    bodyDef.angle = 0.9;
-    b2Body *body = world.CreateBody(&bodyDef);
-    b2PolygonShape dynamicBox;
-    dynamicBox.SetAsBox(1, 1);
-    b2FixtureDef fixtureDef;
-    fixtureDef.shape = &dynamicBox;
-    fixtureDef.density = 1;
-    fixtureDef.friction = 0.3;
-    fixtureDef.restitution = 0.5;
-    body->CreateFixture(&fixtureDef);
+    Entity ent;
+    Entity::create_rect(world, ent, b2_dynamicBody, 1, 1, 0, 10, 0.9,
+            { 1, 0.3, 0.5 });
 
     float timeStep = 1.0 / 60;
 
     Graphics graphics{ window };
 
-    Geometry groundGeo = {
-        { -50, -10, 50, -10, 50, 10, -50, 10 },
-        { 0, 1, 2, 2, 3, 0 },
-    };
-
-    Geometry dynamicGeo = {
-        { -1, -1, 1, -1, 1, 1, -1, 1 },
-        { 0, 1, 2, 2, 3, 0 },
-    };
-
-    handler.set_delegate(GLFW_KEY_W, [body](GLFWwindow *, int action, int) {
+    handler.set_delegate(GLFW_KEY_W, [&ent](GLFWwindow *, int action, int) {
         if (action != GLFW_PRESS) { return; };
         b2Vec2 force{ 0, 50 };
-        body->ApplyLinearImpulseToCenter(force, false);
-        body->ApplyAngularImpulse(10, false);
-        std::cout << "MEOW" << std::endl;
+        ent.body()->ApplyLinearImpulseToCenter(force, false);
+        ent.body()->ApplyAngularImpulse(10, false);
     });
-
-    std::vector<Entity> ents;
-    ents.emplace_back(fvec2{ 0.2, 0.2 }, 0.1, 0.5);
-    ents.emplace_back(fvec2{-0.5, 0   }, 0.2, 0.3);
 
     glViewport(0, 0, window.width(), window.height());
     while (window.poll()) {
         world.Step(timeStep, 6, 2);
 
-        b2Vec2 position = body->GetPosition();
-        float32 angle = body->GetAngle();
-
         glClear(GL_COLOR_BUFFER_BIT);
 
-        Entity dynamicEnt{ fvec2{ -position.x, position.y }, angle, 1 };
-
-        position = groundBody->GetPosition();
-        angle = groundBody->GetAngle();
-
-        Entity groundEnt{ fvec2{ -position.x, position.y }, 0, 1 };
-
-        graphics.draw(groundGeo, { groundEnt });
-        graphics.draw(dynamicGeo, { dynamicEnt });
+        graphics.draw(ground);
+        graphics.draw(ent);
     }
 
     return EXIT_SUCCESS;

@@ -8,10 +8,9 @@ static constexpr auto VERT_CODE = R"glsl(
 #version 150 core
 
 in vec2 position;
-in vec2 translate;
-in float angle;
-in float scale;
 
+uniform vec2 translate;
+uniform float angle;
 uniform mat4 mvp;
 
 mat2 rot(float angle) {
@@ -20,12 +19,8 @@ mat2 rot(float angle) {
     return mat2(c, -s, s, c);
 }
 
-mat2 ratio(float scale) {
-    return mat2(scale, 0, 0, scale);
-}
-
 void main() {
-    gl_Position = mvp * vec4(translate + rot(angle) * ratio(scale) * position, 0.0, 1.0);
+    gl_Position = mvp * vec4(translate + rot(angle) * position, 0.0, 1.0);
 }
 )glsl";
 
@@ -59,24 +54,22 @@ namespace ng {
         glLinkProgram(prog_shdr);
         glUseProgram(prog_shdr);
 
-        constexpr GLuint divisors[] = { 0, 1, 1, 1 };
-        constexpr GLuint sizes[]    = { 2, 2, 1, 1 };
-        constexpr const char *names[] = {
-            "position",
-            "translate",
-            "angle",
-            "scale",
-        };
-        for (std::size_t i = 0; i < Buffer::BUFFER_COUNT; ++i) {
+        constexpr GLuint attrib_sizes[] = { 2 };
+        constexpr const char *attrib_names[] = { "position" };
+        static_assert(std::size(attrib_names) == Buffer::BUFFER_COUNT);
+        for (std::size_t i = 0; i < std::size(attrib_names); ++i) {
             auto &attrib = m_attribs[i];
-            attrib = glGetAttribLocation(prog_shdr, names[i]);
+            attrib = glGetAttribLocation(prog_shdr, attrib_names[i]);
             glBindBuffer(GL_ARRAY_BUFFER, m_buffers[i]);
             glEnableVertexAttribArray(attrib);
-            glVertexAttribPointer(attrib, sizes[i], GL_FLOAT, GL_FALSE, 0, 0);
-            glVertexAttribDivisor(attrib, divisors[i]);
+            glVertexAttribPointer(attrib, attrib_sizes[i], GL_FLOAT, GL_FALSE, 0, 0);
         }
 
-        m_uniforms[Uniform::MVP] = glGetUniformLocation(prog_shdr, "mvp");
+        constexpr const char *uniform_names[] = { "translate", "angle", "mvp" };
+        static_assert(std::size(uniform_names) == Uniform::UNIFORM_COUNT);
+        for (std::size_t i = 0; i < std::size(uniform_names); ++i) {
+            m_uniforms[i] = glGetUniformLocation(prog_shdr, uniform_names[i]);
+        }
 
         float r = static_cast<float>(win.width()) / win.height();
         mat4x4 mvp, s;
@@ -87,32 +80,23 @@ namespace ng {
         glUniformMatrix4fv(m_uniforms[Uniform::MVP], 1, GL_FALSE, reinterpret_cast<GLfloat *>(mvp));
     }
 
-    void Graphics::draw(const Geometry &geo, const std::vector<Entity> &ents) {
-        glBindBuffer(GL_ARRAY_BUFFER, m_buffers[Buffer::POSITION]);
-        glBufferData(GL_ARRAY_BUFFER, byte_size(geo.vertices), geo.vertices.data(), GL_STATIC_DRAW);
-
-        std::vector<float> pos{};
-        std::vector<float> angle{};
-        std::vector<float> scale{};
-        pos.reserve(ents.size());
-        angle.reserve(ents.size());
-        scale.reserve(ents.size());
-        for (const auto &ent : ents) {
-            pos.push_back(ent.pos()[0]);
-            pos.push_back(ent.pos()[1]);
-            angle.push_back(ent.angle());
-            scale.push_back(ent.scale());
+    void Graphics::draw(const Entity &ent) {
+        auto &shape = ent.shape();
+        std::vector<float> vertices{};
+        vertices.reserve(shape.m_count * 2);
+        for (std::size_t i = 0; i < shape.m_count; ++i) {
+            auto &vertex = shape.m_vertices[i];
+            vertices.push_back(vertex.x);
+            vertices.push_back(vertex.y);
         }
+        glBindBuffer(GL_ARRAY_BUFFER, m_buffers[Buffer::POSITION]);
+        glBufferData(GL_ARRAY_BUFFER, byte_size(vertices), vertices.data(), GL_STREAM_DRAW);
 
-        glBindBuffer(GL_ARRAY_BUFFER, m_buffers[Buffer::TRANSLATE]);
-        glBufferData(GL_ARRAY_BUFFER, byte_size(pos), pos.data(), GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, m_buffers[Buffer::ANGLE]);
-        glBufferData(GL_ARRAY_BUFFER, byte_size(angle), angle.data(), GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, m_buffers[Buffer::SCALE]);
-        glBufferData(GL_ARRAY_BUFFER, byte_size(scale), scale.data(), GL_STATIC_DRAW);
+        auto &pos = ent.body()->GetPosition();
+        glUniform2f(m_uniforms[Uniform::TRANSLATE], pos.x, pos.y);
+        glUniform1f(m_uniforms[Uniform::ANGLE], ent.body()->GetAngle());
 
-        const auto &indices = geo.indices;
-        glDrawElementsInstanced(GL_TRIANGLE_FAN, indices.size(), GL_UNSIGNED_INT, indices.data(), ents.size());
+        glDrawArrays(GL_TRIANGLE_FAN, 0, shape.m_count);
     }
 
 }

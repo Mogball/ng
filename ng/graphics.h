@@ -12,15 +12,14 @@ namespace ng {
     class Graphics {
         enum Buffer {
             POSITION,
-            TRANSLATE,
-            ANGLE,
-            SCALE,
 
             BUFFER_COUNT
         };
 
         enum Uniform {
             MVP,
+            TRANSLATE,
+            ANGLE,
 
             UNIFORM_COUNT
         };
@@ -41,7 +40,7 @@ namespace ng {
     public:
         Graphics(const Window &win);
 
-        void draw(const Geometry &geo, const std::vector<Entity> &ents);
+        void draw(const Entity &ent);
     };
 
 }
