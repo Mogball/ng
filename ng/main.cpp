@@ -36,8 +36,8 @@ int main() {
     handler.set_delegate(GLFW_KEY_W, [&ent](GLFWwindow *, int action, int) {
         if (action != GLFW_PRESS) { return; };
         b2Vec2 force{ 0, 50 };
-        ent.body()->ApplyLinearImpulseToCenter(force, false);
-        ent.body()->ApplyAngularImpulse(10, false);
+        ent.body()->ApplyLinearImpulseToCenter(force, true);
+        ent.body()->ApplyAngularImpulse(10, true);
     });
 
     glViewport(0, 0, window.width(), window.height());

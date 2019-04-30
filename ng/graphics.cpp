@@ -2,10 +2,12 @@
 #include "linmath.h"
 #include "window.h"
 
+#include <iostream>
+
 static constexpr auto WORLD_SCALE = 0.1;
 
 static constexpr auto VERT_CODE = R"glsl(
-#version 150 core
+#version 330
 
 in vec2 position;
 
@@ -25,10 +27,12 @@ void main() {
 )glsl";
 
 static constexpr auto FRAG_CODE = R"glsl(
-#version 150 core
+#version 330
+
+out vec4 frag_color;
 
 void main() {
-    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    frag_color = vec4(1.0, 1.0, 1.0, 1.0);
 }
 )glsl";
 
@@ -65,7 +69,7 @@ namespace ng {
             glVertexAttribPointer(attrib, attrib_sizes[i], GL_FLOAT, GL_FALSE, 0, 0);
         }
 
-        constexpr const char *uniform_names[] = { "translate", "angle", "mvp" };
+        constexpr const char *uniform_names[] = { "mvp", "translate", "angle" };
         static_assert(std::size(uniform_names) == Uniform::UNIFORM_COUNT);
         for (std::size_t i = 0; i < std::size(uniform_names); ++i) {
             m_uniforms[i] = glGetUniformLocation(prog_shdr, uniform_names[i]);
@@ -78,6 +82,8 @@ namespace ng {
         mat4x4_ortho(mvp, -r, r, -1, 1, 0, 1);
         mat4x4_mul(mvp, mvp, s);
         glUniformMatrix4fv(m_uniforms[Uniform::MVP], 1, GL_FALSE, reinterpret_cast<GLfloat *>(mvp));
+
+        glEnable(GL_MULTISAMPLE);
     }
 
     void Graphics::draw(const Entity &ent) {
@@ -93,7 +99,8 @@ namespace ng {
         glBufferData(GL_ARRAY_BUFFER, byte_size(vertices), vertices.data(), GL_STREAM_DRAW);
 
         auto &pos = ent.body()->GetPosition();
-        glUniform2f(m_uniforms[Uniform::TRANSLATE], pos.x, pos.y);
+        // Box2D and OpenGL x-axis is reversed
+        glUniform2f(m_uniforms[Uniform::TRANSLATE], -pos.x, pos.y);
         glUniform1f(m_uniforms[Uniform::ANGLE], ent.body()->GetAngle());
 
         glDrawArrays(GL_TRIANGLE_FAN, 0, shape.m_count);
