@@ -1,10 +1,12 @@
+#include "entity.h"
 #include "graphics.h"
 #include "linmath.h"
+#include "utility.h"
 #include "window.h"
 
 #include <iostream>
 
-static constexpr auto WORLD_SCALE = 0.1;
+static constexpr auto WORLD_SCALE = 0.03;
 
 static constexpr auto VERT_CODE = R"glsl(
 #version 330
@@ -84,26 +86,41 @@ namespace ng {
         glUniformMatrix4fv(m_uniforms[Uniform::MVP], 1, GL_FALSE, reinterpret_cast<GLfloat *>(mvp));
 
         glEnable(GL_MULTISAMPLE);
+        glViewport(0, 0, win.width(), win.height());
     }
 
     void Graphics::draw(const Entity &ent) {
-        auto &shape = ent.shape();
+        auto &body = ent.body();
+        auto fixture = body.GetFixtureList();
+        for (; fixture != nullptr; fixture = fixture->GetNext()) {
+            draw(body, *fixture);
+        }
+    }
+
+    void Graphics::draw(const b2Body &body, const b2Fixture &fixture) {
+        switch (fixture.GetType()) {
+        case b2Shape::Type::e_polygon:
+            draw(body, *reinterpret_cast<const b2PolygonShape *>(fixture.GetShape()));
+        }
+    }
+
+    void Graphics::draw(const b2Body &body, const b2PolygonShape &polygon) {
         std::vector<float> vertices{};
-        vertices.reserve(shape.m_count * 2);
-        for (std::size_t i = 0; i < shape.m_count; ++i) {
-            auto &vertex = shape.m_vertices[i];
+        vertices.reserve(polygon.m_count * 2);
+        for (std::size_t i = 0; i < polygon.m_count; ++i) {
+            auto &vertex = polygon.m_vertices[i];
             vertices.push_back(vertex.x);
             vertices.push_back(vertex.y);
         }
         glBindBuffer(GL_ARRAY_BUFFER, m_buffers[Buffer::POSITION]);
         glBufferData(GL_ARRAY_BUFFER, byte_size(vertices), vertices.data(), GL_STREAM_DRAW);
 
-        auto &pos = ent.body()->GetPosition();
+        auto &pos = body.GetPosition();
         // Box2D and OpenGL x-axis is reversed
         glUniform2f(m_uniforms[Uniform::TRANSLATE], -pos.x, pos.y);
-        glUniform1f(m_uniforms[Uniform::ANGLE], ent.body()->GetAngle());
+        glUniform1f(m_uniforms[Uniform::ANGLE], body.GetAngle());
 
-        glDrawArrays(GL_TRIANGLE_FAN, 0, shape.m_count);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, polygon.m_count);
     }
 
 }

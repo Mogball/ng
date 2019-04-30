@@ -1,12 +1,12 @@
 #pragma once
 
-#include "entity.h"
 #include "gl.h"
-#include "utility.h"
+#include <Box2D/Box2D.h>
 #include <array>
 
 namespace ng {
 
+    class Entity;
     class Window;
 
     class Graphics {
@@ -41,6 +41,8 @@ namespace ng {
         Graphics(const Window &win);
 
         void draw(const Entity &ent);
+        void draw(const b2Body &body, const b2Fixture &fixture);
+        void draw(const b2Body &body, const b2PolygonShape &polygon);
     };
 
 }
