@@ -1,5 +1,5 @@
-#include "key_handler.h"
 #include "assert.h"
+#include "key_handler.h"
 
 namespace ng {
 
@@ -19,7 +19,7 @@ namespace ng {
     }
 
     KeyHandler::KeyHandler(GLFWwindow *win) {
-        m_delegates.fill([](GLFWwindow *, int, int) {});
+        m_delegates.fill([](GLFWwindow *, int, int) { });
 
         ng_assert(s_instance == nullptr);
         s_instance = this;

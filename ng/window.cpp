@@ -1,13 +1,9 @@
 #include "window.h"
 #include <iostream>
 
-static constexpr auto WIDTH = 1920;
-static constexpr auto HEIGHT = 1080;
-static constexpr auto NAME = "Memes";
-
 namespace ng {
 
-    Window::Window() {
+    Window::Window(std::string name, int w, int h) {
         auto err_callback = [](int err, const char *desc) {
             std::cout << "GLFW Error [" << err << "]: " << desc << std::endl;
         };
@@ -15,7 +11,7 @@ namespace ng {
 
         glfwInit();
 
-        m_win = glfwCreateWindow(WIDTH, HEIGHT, NAME, nullptr, nullptr);
+        m_win = glfwCreateWindow(w, h, name.c_str(), nullptr, nullptr);
 
         glfwMakeContextCurrent(m_win);
         gladLoadGL(glfwGetProcAddress);

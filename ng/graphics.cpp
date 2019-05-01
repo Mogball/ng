@@ -6,8 +6,6 @@
 
 #include <iostream>
 
-static constexpr auto WORLD_SCALE = 0.03;
-
 static constexpr auto VERT_CODE = R"glsl(
 #version 330
 
@@ -40,7 +38,9 @@ void main() {
 
 namespace ng {
 
-    Graphics::Graphics(const Window &win) {
+    Graphics::Graphics(const Window &win, float scale) :
+        m_scale(scale)
+    {
         glGenBuffers(Buffer::BUFFER_COUNT, std::begin(m_buffers));
 
         auto &prog_vert = m_programs[Program::VERTEX];
@@ -80,7 +80,7 @@ namespace ng {
         float r = static_cast<float>(win.width()) / win.height();
         mat4x4 mvp, s;
         mat4x4_identity(s);
-        mat4x4_scale_aniso(s, s, WORLD_SCALE, WORLD_SCALE, WORLD_SCALE);
+        mat4x4_scale_aniso(s, s, scale, scale, scale);
         mat4x4_ortho(mvp, -r, r, -1, 1, 0, 1);
         mat4x4_mul(mvp, mvp, s);
         glUniformMatrix4fv(m_uniforms[Uniform::MVP], 1, GL_FALSE, reinterpret_cast<GLfloat *>(mvp));

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gl.h"
+#include <string>
 
 namespace ng {
 
@@ -11,7 +12,7 @@ namespace ng {
         int m_win_h;
 
     public:
-        Window();
+        Window(std::string name, int w, int h);
         ~Window();
 
         bool poll();

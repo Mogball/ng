@@ -30,7 +30,7 @@ namespace ng {
         }
 
         inline void remove_delegate(int key) {
-            m_delegates[key] = [](GLFWwindow *, int, int) {};
+            m_delegates[key] = [](GLFWwindow *, int, int) { };
         }
     };
 

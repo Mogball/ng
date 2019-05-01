@@ -3,6 +3,7 @@
 #include "entity.h"
 #include "graphics.h"
 #include "key_handler.h"
+#include "mouse_handler.h"
 #include "properties.h"
 #include "window.h"
 #include <Box2D/Box2D.h>
@@ -14,22 +15,24 @@ namespace ng {
         Window m_window;
         Graphics m_graphics;
         KeyHandler m_key_handler;
+        MouseHandler m_mouse_handler;
         b2World m_world;
         std::list<Entity> m_entities;
 
-    private:
-        void set_key_delegates();
-
     public:
-        Game();
+        Game(std::string name, int w, int h, float scale);
+
+        inline KeyHandler &key_handler() { return m_key_handler; }
+        inline MouseHandler &mouse_handler() { return m_mouse_handler; }
+
+        b2Vec2 window_to_game_coords(float x, float y);
 
         void run();
 
         Entity &create_rect(
-                float w, float h,
-                float x, float y, float angle = 0,
-                b2BodyType type = b2_dynamicBody,
-                Properties props = {});
+                const Location &loc = {},
+                const Properties &props = {},
+                b2BodyType type = b2_dynamicBody);
     };
 
 }
