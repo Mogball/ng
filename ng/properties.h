@@ -5,6 +5,7 @@ namespace ng {
     struct Location {
         float w = 1;
         float h = 1;
+        float r = 1;
         float x = 0;
         float y = 0;
         float angle = 0;
@@ -15,7 +16,7 @@ namespace ng {
 
     struct Properties {
         float density = 1;
-        float friction = 0.4;
+        float friction = 3;
         float restitution = 0.1;
     };
 

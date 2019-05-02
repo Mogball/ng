@@ -4,8 +4,6 @@
 #include "utility.h"
 #include "window.h"
 
-#include <iostream>
-
 static constexpr auto VERT_CODE = R"glsl(
 #version 330
 
@@ -13,6 +11,7 @@ in vec2 position;
 
 uniform vec2 translate;
 uniform float angle;
+uniform float scale;
 uniform mat4 mvp;
 
 mat2 rot(float angle) {
@@ -21,8 +20,12 @@ mat2 rot(float angle) {
     return mat2(c, -s, s, c);
 }
 
+mat2 ratio(float s) {
+    return mat2(s, 0, 0, s);
+}
+
 void main() {
-    gl_Position = mvp * vec4(translate + rot(angle) * position, 0.0, 1.0);
+    gl_Position = mvp * vec4(translate + rot(angle) * ratio(scale) * position, 0.0, 1.0);
 }
 )glsl";
 
@@ -39,7 +42,8 @@ void main() {
 namespace ng {
 
     Graphics::Graphics(const Window &win, float scale) :
-        m_scale(scale)
+        m_scale(scale),
+        m_unit_circle(make_circle(64))
     {
         glGenBuffers(Buffer::BUFFER_COUNT, std::begin(m_buffers));
 
@@ -71,7 +75,7 @@ namespace ng {
             glVertexAttribPointer(attrib, attrib_sizes[i], GL_FLOAT, GL_FALSE, 0, 0);
         }
 
-        constexpr const char *uniform_names[] = { "mvp", "translate", "angle" };
+        constexpr const char *uniform_names[] = { "mvp", "translate", "scale", "angle" };
         static_assert(std::size(uniform_names) == Uniform::UNIFORM_COUNT);
         for (std::size_t i = 0; i < std::size(uniform_names); ++i) {
             m_uniforms[i] = glGetUniformLocation(prog_shdr, uniform_names[i]);
@@ -99,8 +103,12 @@ namespace ng {
 
     void Graphics::draw(const b2Body &body, const b2Fixture &fixture) {
         switch (fixture.GetType()) {
+        case b2Shape::Type::e_circle:
+            draw(body, *reinterpret_cast<const b2CircleShape *>(fixture.GetShape()));
+            break;
         case b2Shape::Type::e_polygon:
             draw(body, *reinterpret_cast<const b2PolygonShape *>(fixture.GetShape()));
+            break;
         }
     }
 
@@ -119,8 +127,22 @@ namespace ng {
         // Box2D and OpenGL x-axis is reversed
         glUniform2f(m_uniforms[Uniform::TRANSLATE], -pos.x, pos.y);
         glUniform1f(m_uniforms[Uniform::ANGLE], body.GetAngle());
+        glUniform1f(m_uniforms[Uniform::SCALE], 1);
 
         glDrawArrays(GL_TRIANGLE_FAN, 0, polygon.m_count);
+    }
+
+    void Graphics::draw(const b2Body &body, const b2CircleShape &circle) {
+        glBindBuffer(GL_ARRAY_BUFFER, m_buffers[Buffer::POSITION]);
+        glBufferData(GL_ARRAY_BUFFER, byte_size(m_unit_circle), m_unit_circle.data(), GL_STREAM_DRAW);
+
+        auto &pos = body.GetPosition();
+        // Box2D and OpenGL x-axis is reversed
+        glUniform2f(m_uniforms[Uniform::TRANSLATE], -pos.x, pos.y);
+        glUniform1f(m_uniforms[Uniform::ANGLE], body.GetAngle());
+        glUniform1f(m_uniforms[Uniform::SCALE], circle.m_radius);
+
+        glDrawArrays(GL_TRIANGLE_FAN, 0, m_unit_circle.size());
     }
 
 }

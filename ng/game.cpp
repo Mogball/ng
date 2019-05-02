@@ -1,15 +1,13 @@
 #include "game.h"
 
-static constexpr auto GRAVITY = -10;
-
 namespace ng {
 
-    Game::Game(std::string name, int w, int h, float scale) :
+    Game::Game(std::string name, int w, int h, float scale, float gravity) :
         m_window{ std::move(name), w, h },
         m_graphics{ m_window, scale },
         m_key_handler{ m_window.get() },
         m_mouse_handler{ m_window.get() },
-        m_world{ b2Vec2{ 0, GRAVITY } }
+        m_world{ b2Vec2{ 0, -gravity } }
     { }
 
     b2Vec2 Game::window_to_game_coords(float x, float y) {
@@ -49,6 +47,25 @@ namespace ng {
             const Location &loc,
             const Properties &props,
             b2BodyType type) {
+        b2PolygonShape shape;
+        shape.SetAsBox(loc.w, loc.h);
+        return create_shape(shape, loc, props, type);
+    }
+
+    Entity &Game::create_circle(
+            const Location &loc,
+            const Properties &props,
+            b2BodyType type) {
+        b2CircleShape shape;
+        shape.m_radius = loc.r;
+        return create_shape(shape, loc, props, type);
+    }
+
+    Entity &Game::create_shape(
+            const b2Shape &shape,
+            const Location &loc,
+            const Properties &props,
+            b2BodyType type) {
         b2BodyDef body_def;
         body_def.type = type;
         body_def.position.Set(loc.x, loc.y);
@@ -57,9 +74,6 @@ namespace ng {
         body_def.angularVelocity = loc.omega;
 
         b2Body *body = m_world.CreateBody(&body_def);
-
-        b2PolygonShape shape;
-        shape.SetAsBox(loc.w, loc.h);
 
         b2FixtureDef fixture_def;
         fixture_def.shape = &shape;

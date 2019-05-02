@@ -3,6 +3,7 @@
 #include "gl.h"
 #include <Box2D/Box2D.h>
 #include <array>
+#include <vector>
 
 namespace ng {
 
@@ -19,6 +20,7 @@ namespace ng {
         enum Uniform {
             MVP,
             TRANSLATE,
+            SCALE,
             ANGLE,
 
             UNIFORM_COUNT
@@ -34,6 +36,9 @@ namespace ng {
 
         float m_scale;
 
+        // Pre-computed circle vertices
+        std::vector<b2Vec2> m_unit_circle;
+
         std::array<GLuint, Buffer::BUFFER_COUNT> m_buffers;
         std::array<GLuint, Buffer::BUFFER_COUNT> m_attribs;
         std::array<GLuint, Uniform::UNIFORM_COUNT> m_uniforms;
@@ -47,6 +52,7 @@ namespace ng {
         void draw(const Entity &ent);
         void draw(const b2Body &body, const b2Fixture &fixture);
         void draw(const b2Body &body, const b2PolygonShape &polygon);
+        void draw(const b2Body &body, const b2CircleShape &circle);
     };
 
 }

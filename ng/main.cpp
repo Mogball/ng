@@ -4,7 +4,7 @@
 using namespace ng;
 
 int main() {
-    ng::Game game{ "Memes", 1920, 1080, 0.02 };
+    ng::Game game{ "Memes", 1920, 1080, 0.1, 25 };
 
     auto &key_handler = game.key_handler();
     key_handler.set_delegate(GLFW_KEY_ESCAPE, [](GLFWwindow *win, int, int) {
@@ -16,7 +16,7 @@ int main() {
         double x, y;
         glfwGetCursorPos(win, &x, &y);
         auto v = game.window_to_game_coords(x, y);
-        game.create_rect({ 1, 1, v.x, v.y, 0 });
+        game.create_rect({ .w = 0.5, .h = 0.5, .x = v.x, .y = v.y });
     });
 
     mouse_handler.set_delegate(GLFW_MOUSE_BUTTON_RIGHT, [&game](GLFWwindow *win, int action, int) {
@@ -24,11 +24,10 @@ int main() {
         double x, y;
         glfwGetCursorPos(win, &x, &y);
         auto v = game.window_to_game_coords(x, y);
-        game.create_rect({ 5, 5, v.x, v.y, 0, 100 }, { .density = 10 });
+        game.create_circle({ .r = 0.5, .x = v.x, .y = v.y, .vx = 25 }, { .density = 3 });
     });
 
-    game.create_rect({ 50, 10, 0, -20, 0 }, {}, b2_staticBody);
-    game.create_rect({ 1, 1, 0, 20, 0.2 });
+    game.create_rect({ .w = 10, .h = 3, .x = 0, .y = -10 }, {}, b2_staticBody);
     game.run();
 
     return EXIT_SUCCESS;

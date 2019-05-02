@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Box2D/Box2D.h>
 #include <type_traits>
 #include <vector>
 
@@ -14,5 +15,7 @@ namespace ng {
     constexpr auto byte_size(const std::vector<T> &v) {
         return v.size() * sizeof(T);
     }
+
+    std::vector<b2Vec2> make_circle(std::size_t vertex_count);
 
 }

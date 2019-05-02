@@ -20,7 +20,7 @@ namespace ng {
         std::list<Entity> m_entities;
 
     public:
-        Game(std::string name, int w, int h, float scale);
+        Game(std::string name, int w, int h, float scale, float gravity);
 
         inline KeyHandler &key_handler() { return m_key_handler; }
         inline MouseHandler &mouse_handler() { return m_mouse_handler; }
@@ -33,6 +33,17 @@ namespace ng {
                 const Location &loc = {},
                 const Properties &props = {},
                 b2BodyType type = b2_dynamicBody);
+
+        Entity &create_circle(
+                const Location &loc = {},
+                const Properties &props = {},
+                b2BodyType type = b2_dynamicBody);
+
+        Entity &create_shape(
+                const b2Shape &shape,
+                const Location &loc,
+                const Properties &props,
+                b2BodyType type);
     };
 
 }
