@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gl.h"
+#include <array>
 #include <functional>
 
 namespace ng {
