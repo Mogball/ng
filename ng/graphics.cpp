@@ -1,8 +1,10 @@
 #include "entity.h"
+#include "gl_util.h"
 #include "graphics.h"
 #include "linmath.h"
 #include "utility.h"
 #include "window.h"
+#include <iostream>
 
 static constexpr auto VERT_CODE = R"glsl(
 #version 330
@@ -45,6 +47,9 @@ namespace ng {
         m_scale(scale),
         m_unit_circle(make_circle(64))
     {
+        auto version = glGetString(GL_VERSION);
+        std::cout << "OpenGL version: " << version << std::endl;
+
         glGenBuffers(Buffer::BUFFER_COUNT, std::begin(m_buffers));
 
         auto &prog_vert = m_programs[Program::VERTEX];
@@ -55,13 +60,18 @@ namespace ng {
         prog_frag = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(prog_vert, 1, &VERT_CODE, nullptr);
         glShaderSource(prog_frag, 1, &FRAG_CODE, nullptr);
+
         glCompileShader(prog_vert);
+        gl_util::check_shader_compile(prog_vert);
+
         glCompileShader(prog_frag);
+        gl_util::check_shader_compile(prog_frag);
 
         prog_shdr = glCreateProgram();
         glAttachShader(prog_shdr, prog_vert);
         glAttachShader(prog_shdr, prog_frag);
         glLinkProgram(prog_shdr);
+        gl_util::check_program_link(prog_shdr);
         glUseProgram(prog_shdr);
 
         constexpr GLuint attrib_sizes[] = { 2 };
@@ -108,6 +118,8 @@ namespace ng {
             break;
         case b2Shape::Type::e_polygon:
             draw(body, *reinterpret_cast<const b2PolygonShape *>(fixture.GetShape()));
+            break;
+        default:
             break;
         }
     }

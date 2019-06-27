@@ -25,11 +25,15 @@ target_include_directories(glad PUBLIC "${GLFW_DIR}/deps")
 
 find_package(OpenGL REQUIRED)
 
-file(GLOB_RECURSE SRC "${PROJECT_SOURCE_DIR}/ng/*.cpp")
-add_executable(${NAME} ${SRC})
+file(GLOB_RECURSE NG_SRC "${PROJECT_SOURCE_DIR}/ng/*.cpp")
+add_executable(${NAME} ${NG_SRC})
 target_link_libraries(${NAME} glfw box2d glad ${OPENGL_gl_LIBRARY})
 target_include_directories(${NAME} PUBLIC "${GLFW_DIR}/include")
 target_include_directories(${NAME} PUBLIC "${GLFW_DIR}/deps")
 target_include_directories(${NAME} PUBLIC "${BOX2D_DIR}")
 target_include_directories(${NAME} PUBLIC "${OPENGL_INCLUDE_DIR}")
 target_compile_options(${NAME} PUBLIC -save-temps)
+
+file(GLOB_RECURSE NN_SRC "${PROJECT_SOURCE_DIR}/nn/*.cpp")
+add_executable(nn ${NN_SRC})
+target_compile_options(nn PUBLIC -save-temps)
