@@ -22,11 +22,11 @@ namespace gl_util {
         GLint success = 0;
         glGetProgramiv(program, GL_LINK_STATUS, &success);
         if (success == GL_FALSE) {
-        	GLint size = 0;
-        	glGetProgramiv(program, GL_INFO_LOG_LENGTH, &size);
-        	std::vector<GLchar> error_log(size + 1);
-        	glGetProgramInfoLog(program, size, &size, &error_log[0]);
-        	glDeleteProgram(program);
+            GLint size = 0;
+            glGetProgramiv(program, GL_INFO_LOG_LENGTH, &size);
+            std::vector<GLchar> error_log(size + 1);
+            glGetProgramInfoLog(program, size, &size, &error_log[0]);
+            glDeleteProgram(program);
             std::cout << error_log.data() << std::endl;
         }
         return success == GL_TRUE;
