@@ -47,48 +47,51 @@ namespace ng {
         m_scale(scale),
         m_unit_circle(make_circle(64))
     {
-        auto version = glGetString(GL_VERSION);
+        auto version = CHECK_ERR(glGetString(GL_VERSION));
         std::cout << "OpenGL version: " << version << std::endl;
 
-        glGenBuffers(Buffer::BUFFER_COUNT, std::begin(m_buffers));
+        CHECK_ERR(glGenVertexArrays(1, &m_vao));
+        CHECK_ERR(glBindVertexArray(m_vao));
+
+        CHECK_ERR(glGenBuffers(Buffer::BUFFER_COUNT, std::begin(m_buffers)));
 
         auto &prog_vert = m_programs[Program::VERTEX];
         auto &prog_frag = m_programs[Program::FRAGMENT];
         auto &prog_shdr = m_programs[Program::SHADER];
 
-        prog_vert = glCreateShader(GL_VERTEX_SHADER);
-        prog_frag = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(prog_vert, 1, &VERT_CODE, nullptr);
-        glShaderSource(prog_frag, 1, &FRAG_CODE, nullptr);
+        prog_vert = CHECK_ERR(glCreateShader(GL_VERTEX_SHADER));
+        prog_frag = CHECK_ERR(glCreateShader(GL_FRAGMENT_SHADER));
+        CHECK_ERR(glShaderSource(prog_vert, 1, &VERT_CODE, nullptr));
+        CHECK_ERR(glShaderSource(prog_frag, 1, &FRAG_CODE, nullptr));
 
-        glCompileShader(prog_vert);
+        CHECK_ERR(glCompileShader(prog_vert));
         gl_util::check_shader_compile(prog_vert);
 
-        glCompileShader(prog_frag);
+        CHECK_ERR(glCompileShader(prog_frag));
         gl_util::check_shader_compile(prog_frag);
 
-        prog_shdr = glCreateProgram();
-        glAttachShader(prog_shdr, prog_vert);
-        glAttachShader(prog_shdr, prog_frag);
-        glLinkProgram(prog_shdr);
+        prog_shdr = CHECK_ERR(glCreateProgram());
+        CHECK_ERR(glAttachShader(prog_shdr, prog_vert));
+        CHECK_ERR(glAttachShader(prog_shdr, prog_frag));
+        CHECK_ERR(glLinkProgram(prog_shdr));
         gl_util::check_program_link(prog_shdr);
-        glUseProgram(prog_shdr);
+        CHECK_ERR(glUseProgram(prog_shdr));
 
         constexpr GLuint attrib_sizes[] = { 2 };
         constexpr const char *attrib_names[] = { "position" };
         static_assert(std::size(attrib_names) == Buffer::BUFFER_COUNT);
         for (std::size_t i = 0; i < std::size(attrib_names); ++i) {
             auto &attrib = m_attribs[i];
-            attrib = glGetAttribLocation(prog_shdr, attrib_names[i]);
-            glBindBuffer(GL_ARRAY_BUFFER, m_buffers[i]);
-            glEnableVertexAttribArray(attrib);
-            glVertexAttribPointer(attrib, attrib_sizes[i], GL_FLOAT, GL_FALSE, 0, 0);
+            attrib = CHECK_ERR(glGetAttribLocation(prog_shdr, attrib_names[i]));
+            CHECK_ERR(glBindBuffer(GL_ARRAY_BUFFER, m_buffers[i]));
+            CHECK_ERR(glEnableVertexAttribArray(attrib));
+            CHECK_ERR(glVertexAttribPointer(attrib, attrib_sizes[i], GL_FLOAT, GL_FALSE, 0, 0));
         }
 
         constexpr const char *uniform_names[] = { "mvp", "translate", "scale", "angle" };
         static_assert(std::size(uniform_names) == Uniform::UNIFORM_COUNT);
         for (std::size_t i = 0; i < std::size(uniform_names); ++i) {
-            m_uniforms[i] = glGetUniformLocation(prog_shdr, uniform_names[i]);
+            m_uniforms[i] = CHECK_ERR(glGetUniformLocation(prog_shdr, uniform_names[i]));
         }
 
         float r = static_cast<float>(win.width()) / win.height();
@@ -97,10 +100,10 @@ namespace ng {
         mat4x4_scale_aniso(s, s, scale, scale, scale);
         mat4x4_ortho(mvp, -r, r, -1, 1, 0, 1);
         mat4x4_mul(mvp, mvp, s);
-        glUniformMatrix4fv(m_uniforms[Uniform::MVP], 1, GL_FALSE, reinterpret_cast<GLfloat *>(mvp));
+        CHECK_ERR(glUniformMatrix4fv(m_uniforms[Uniform::MVP], 1, GL_FALSE, reinterpret_cast<GLfloat *>(mvp)));
 
-        glEnable(GL_MULTISAMPLE);
-        glViewport(0, 0, win.width(), win.height());
+        CHECK_ERR(glEnable(GL_MULTISAMPLE));
+        CHECK_ERR(glViewport(0, 0, win.width(), win.height()));
     }
 
     void Graphics::draw(const Entity &ent) {
@@ -132,29 +135,29 @@ namespace ng {
             vertices.push_back(vertex.x);
             vertices.push_back(vertex.y);
         }
-        glBindBuffer(GL_ARRAY_BUFFER, m_buffers[Buffer::POSITION]);
-        glBufferData(GL_ARRAY_BUFFER, byte_size(vertices), vertices.data(), GL_STREAM_DRAW);
+        CHECK_ERR(glBindBuffer(GL_ARRAY_BUFFER, m_buffers[Buffer::POSITION]));
+        CHECK_ERR(glBufferData(GL_ARRAY_BUFFER, byte_size(vertices), vertices.data(), GL_STREAM_DRAW));
 
         auto &pos = body.GetPosition();
         // Box2D and OpenGL x-axis is reversed
-        glUniform2f(m_uniforms[Uniform::TRANSLATE], -pos.x, pos.y);
-        glUniform1f(m_uniforms[Uniform::ANGLE], body.GetAngle());
-        glUniform1f(m_uniforms[Uniform::SCALE], 1);
+        CHECK_ERR(glUniform2f(m_uniforms[Uniform::TRANSLATE], -pos.x, pos.y));
+        CHECK_ERR(glUniform1f(m_uniforms[Uniform::ANGLE], body.GetAngle()));
+        CHECK_ERR(glUniform1f(m_uniforms[Uniform::SCALE], 1));
 
-        glDrawArrays(GL_TRIANGLE_FAN, 0, polygon.m_count);
+        CHECK_ERR(glDrawArrays(GL_TRIANGLE_FAN, 0, polygon.m_count));
     }
 
     void Graphics::draw(const b2Body &body, const b2CircleShape &circle) {
-        glBindBuffer(GL_ARRAY_BUFFER, m_buffers[Buffer::POSITION]);
-        glBufferData(GL_ARRAY_BUFFER, byte_size(m_unit_circle), m_unit_circle.data(), GL_STREAM_DRAW);
+        CHECK_ERR(glBindBuffer(GL_ARRAY_BUFFER, m_buffers[Buffer::POSITION]));
+        CHECK_ERR(glBufferData(GL_ARRAY_BUFFER, byte_size(m_unit_circle), m_unit_circle.data(), GL_STREAM_DRAW));
 
         auto &pos = body.GetPosition();
         // Box2D and OpenGL x-axis is reversed
-        glUniform2f(m_uniforms[Uniform::TRANSLATE], -pos.x, pos.y);
-        glUniform1f(m_uniforms[Uniform::ANGLE], body.GetAngle());
-        glUniform1f(m_uniforms[Uniform::SCALE], circle.m_radius);
+        CHECK_ERR(glUniform2f(m_uniforms[Uniform::TRANSLATE], -pos.x, pos.y));
+        CHECK_ERR(glUniform1f(m_uniforms[Uniform::ANGLE], body.GetAngle()));
+        CHECK_ERR(glUniform1f(m_uniforms[Uniform::SCALE], circle.m_radius));
 
-        glDrawArrays(GL_TRIANGLE_FAN, 0, m_unit_circle.size());
+        CHECK_ERR(glDrawArrays(GL_TRIANGLE_FAN, 0, m_unit_circle.size()));
     }
 
 }

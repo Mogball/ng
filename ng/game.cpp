@@ -1,4 +1,5 @@
 #include "game.h"
+#include "gl_util.h"
 
 namespace ng {
 
@@ -33,7 +34,7 @@ namespace ng {
         constexpr auto position_iterations = 2;
 
         while (m_window.poll()) {
-            glClear(GL_COLOR_BUFFER_BIT);
+            CHECK_ERR(glClear(GL_COLOR_BUFFER_BIT));
 
             m_world.Step(time_step, velocity_iterations, position_iterations);
 

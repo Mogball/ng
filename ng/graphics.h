@@ -44,6 +44,8 @@ namespace ng {
         std::array<GLuint, Uniform::UNIFORM_COUNT> m_uniforms;
         std::array<GLuint, Program::PROGRAM_COUNT> m_programs;
 
+        GLuint m_vao;
+
     public:
         Graphics(const Window &win, float scale);
 
